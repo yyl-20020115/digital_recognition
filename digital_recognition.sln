@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "digital_recognition", "digital_recognition\digital_recognition.vcxproj", "{E53953E0-C202-4EB6-AD98-9F66E0A916DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Debug|x64.ActiveCfg = Debug|x64
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Debug|x64.Build.0 = Debug|x64
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Debug|x86.Build.0 = Debug|Win32
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Release|x64.ActiveCfg = Release|x64
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Release|x64.Build.0 = Release|x64
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Release|x86.ActiveCfg = Release|Win32
+		{E53953E0-C202-4EB6-AD98-9F66E0A916DD}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
