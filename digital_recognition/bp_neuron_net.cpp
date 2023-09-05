@@ -29,63 +29,61 @@
 * bp neuron net
 ************************************************************************/
 
-bpNeuronNet::bpNeuronNet(int numInputs, double learningRate)
-    :mNumInputs(numInputs),
-    mNumOutputs(0),
-    mNumHiddenLayers(0),
-    mLearningRate(learningRate),
-    mErrorSum(9999)
+BPNeuronNet::BPNeuronNet(int numInputs, double learningRate)
+    :mNumInputs(numInputs)
+    ,mNumOutputs(0)
+    ,mNumHiddenLayers(0)
+    ,mLearningRate(learningRate)
+    ,mErrorSum(9999)
 {
 }
 
-bpNeuronNet::~bpNeuronNet()
+BPNeuronNet::~BPNeuronNet()
 {
-
     for (size_t i = 0; i < mNeuronLayers.size(); i++)
     {
-        if (mNeuronLayers[i])
+        if (mNeuronLayers[i]!=nullptr)
         {
             delete mNeuronLayers[i];
+            mNeuronLayers[i] = nullptr;
         }
     }
-    //todo something
+
+    mNeuronLayers.clear();
 }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-
-void bpNeuronNet::reset()
+void BPNeuronNet::Reset()
 {
     //for each layer
     for (int i = 0; i < mNumHiddenLayers + 1; ++i)
     {
-        mNeuronLayers[i]->reset();
+        mNeuronLayers[i]->Reset();
     }
 
     mErrorSum = 9999;
 }
 
-void bpNeuronNet::addNeuronLayer(int numNeurons)
+void BPNeuronNet::AddNeuronLayer(int numNeurons)
 {
     int numInputsPerNeuron = (mNeuronLayers.size() > 0) ? mNeuronLayers[mNumHiddenLayers]->mNumNeurons : mNumInputs;
 
     /** create a neuron layer */
-    mNeuronLayers.push_back(new neuronLayer(numNeurons, numInputsPerNeuron));
+    mNeuronLayers.push_back(new NeuronLayer(numNeurons, numInputsPerNeuron));
 
     /** calculate the count of hidden layers */
-    mNumHiddenLayers = (mNeuronLayers.size() > 0) ? (mNeuronLayers.size() - 1) : 0;
+    mNumHiddenLayers = ((int)mNeuronLayers.size() > 0) ? ((int)mNeuronLayers.size() - 1) : 0;
 }
 
 /************************************************************************
 * bp neuron net forward propagation
 ************************************************************************/
-double bpNeuronNet::sigmoidActive(double activation, double response)
+double BPNeuronNet::SigmoidActive(double activation, double response)
 {
     /** sigmoid function: f(x) = 1 /(1 + exp(-x)) */
     return (1.0 / (1.0 + exp(-activation * response)));
 }
 
-void bpNeuronNet::updateNeuronLayer(neuronLayer& nl, const double inputs[])
+void BPNeuronNet::UpdateNeuronLayer(NeuronLayer& nl, const double inputs[])
 {
     int numNeurons = nl.mNumNeurons;
     int numInputsPerNeuron = nl.mNumInputsPerNeuron;
@@ -111,11 +109,11 @@ void bpNeuronNet::updateNeuronLayer(neuronLayer& nl, const double inputs[])
 
         //The combined activation is first filtered through the sigmoid 
         //function and a record is kept for each neuron 
-        curOutActivations[n] = sigmoidActive(netinput, ACTIVATION_RESPONSE);
+        curOutActivations[n] = SigmoidActive(netinput, ACTIVATION_RESPONSE);
     }
 }
 
-void bpNeuronNet::updateNeuronLayer(neuronLayer& nl, const int indexArray[], const size_t arraySize)
+void BPNeuronNet::UpdateNeuronLayer(NeuronLayer& nl, const int indexArray[], const size_t arraySize)
 {
     int numNeurons = nl.mNumNeurons;
     int numInputsPerNeuron = nl.mNumInputsPerNeuron;
@@ -140,16 +138,16 @@ void bpNeuronNet::updateNeuronLayer(neuronLayer& nl, const int indexArray[], con
 
         //The combined activation is first filtered through the sigmoid 
         //function and a record is kept for each neuron 
-        curOutActivations[n] = sigmoidActive(netinput, ACTIVATION_RESPONSE);
+        curOutActivations[n] = SigmoidActive(netinput, ACTIVATION_RESPONSE);
     }
 }
 
 
-void bpNeuronNet::process(const double inputs[], double* outputs[])
+void BPNeuronNet::Process(const double inputs[], double* outputs[])
 {
     for (int i = 0; i < mNumHiddenLayers + 1; i++)
     {
-        updateNeuronLayer(*mNeuronLayers[i], inputs);
+        UpdateNeuronLayer(*mNeuronLayers[i], inputs);
         inputs = mNeuronLayers[i]->mOutActivations;
     }
 
@@ -157,17 +155,17 @@ void bpNeuronNet::process(const double inputs[], double* outputs[])
 
 }
 
-void bpNeuronNet::process(const int indexArray[], const size_t arraySize, double* outputs[])
+void BPNeuronNet::Process(const int indexArray[], const size_t arraySize, double* outputs[])
 {
 
-    updateNeuronLayer(*mNeuronLayers[0], indexArray, arraySize);
+    UpdateNeuronLayer(*mNeuronLayers[0], indexArray, arraySize);
 
     double* inputs = mNeuronLayers[0]->mOutActivations;
 
 
     for (int i = 1; i < mNumHiddenLayers + 1; i++)
     {
-        updateNeuronLayer(*mNeuronLayers[i], inputs);
+        UpdateNeuronLayer(*mNeuronLayers[i], inputs);
         inputs = mNeuronLayers[i]->mOutActivations;
     }
 
@@ -178,7 +176,7 @@ void bpNeuronNet::process(const int indexArray[], const size_t arraySize, double
 * bp neuron net back propagation
 ************************************************************************/
 
-double bpNeuronNet::backActive(double x)
+double BPNeuronNet::BackActive(double x)
 {
     /** calculate the error value with
     * f(x) = x * (1 - x) is the derivatives of sigmoid active function
@@ -186,16 +184,16 @@ double bpNeuronNet::backActive(double x)
     return x * (1 - x);
 }
 
-void bpNeuronNet::trainUpdate(const double inputs[], const double targets[])
+void BPNeuronNet::TrainUpdate(const double inputs[], const double targets[])
 {
     for (int i = 0; i < mNumHiddenLayers + 1; i++)
     {
-        updateNeuronLayer(*mNeuronLayers[i], inputs);
+        UpdateNeuronLayer(*mNeuronLayers[i], inputs);
         inputs = mNeuronLayers[i]->mOutActivations;
     }
 
     /** get the activations of output layer */
-    neuronLayer& outLayer = *mNeuronLayers[mNumHiddenLayers];
+    NeuronLayer& outLayer = *mNeuronLayers[mNumHiddenLayers];
     double* outActivations = outLayer.mOutActivations;
     double* outErrors = outLayer.mOutErrors;
     int numNeurons = outLayer.mNumNeurons;
@@ -214,22 +212,22 @@ void bpNeuronNet::trainUpdate(const double inputs[], const double targets[])
     }
 }
 
-void bpNeuronNet::trainUpdate(const int indexArray[], const size_t arraySize, const double targets[])
+void BPNeuronNet::TrainUpdate(const int indexArray[], const size_t arraySize, const double targets[])
 {
     double* inputs;
 
-    updateNeuronLayer(*mNeuronLayers[0], indexArray, arraySize);
+    UpdateNeuronLayer(*mNeuronLayers[0], indexArray, arraySize);
     inputs = mNeuronLayers[0]->mOutActivations;
 
 
     for (int i = 1; i < mNumHiddenLayers + 1; i++)
     {
-        updateNeuronLayer(*mNeuronLayers[i], inputs);
+        UpdateNeuronLayer(*mNeuronLayers[i], inputs);
         inputs = mNeuronLayers[i]->mOutActivations;
     }
 
     /** get the activations of output layer */
-    neuronLayer& outLayer = *mNeuronLayers[mNumHiddenLayers];
+    NeuronLayer& outLayer = *mNeuronLayers[mNumHiddenLayers];
     double* outActivations = outLayer.mOutActivations;
     double* outErrors = outLayer.mOutErrors;
     int numNeurons = outLayer.mNumNeurons;
@@ -249,7 +247,7 @@ void bpNeuronNet::trainUpdate(const int indexArray[], const size_t arraySize, co
 }
 
 
-void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const double prevOutActivations[], double prevOutErrors[])
+void BPNeuronNet::TrainNeuronLayer(NeuronLayer& nl, const double prevOutActivations[], double prevOutErrors[])
 {
     int numNeurons = nl.mNumNeurons;
     int numInputsPerNeuron = nl.mNumInputsPerNeuron;
@@ -265,7 +263,7 @@ void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const double prevOutActivati
         /** calculate the error value with  
          * f(x) = x * (1 - x) is the derivatives of sigmoid active function
          */
-        double err = curOutErrors[i] * backActive(coi);
+        double err = curOutErrors[i] * BackActive(coi);
 
         /** for each weight in this neuron calculate the new weight based
          *  on the error signal and the learning rate
@@ -290,7 +288,7 @@ void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const double prevOutActivati
     }
 }
 
-void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const int indexArray[], const size_t arraySize)
+void BPNeuronNet::TrainNeuronLayer(NeuronLayer& nl, const int indexArray[], const size_t arraySize)
 {
     int numNeurons = nl.mNumNeurons;
     int numInputsPerNeuron = nl.mNumInputsPerNeuron;
@@ -306,7 +304,7 @@ void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const int indexArray[], cons
         /** calculate the error value with
         * f(x) = x * (1 - x) is the derivatives of sigmoid active function
         */
-        double err = curOutErrors[i] * backActive(coi);
+        double err = curOutErrors[i] * BackActive(coi);
 
         /** for each weight in this neuron calculate the new weight based
         *  on the error signal and the learning rate
@@ -325,21 +323,21 @@ void bpNeuronNet::trainNeuronLayer(neuronLayer& nl, const int indexArray[], cons
 }
 
 
-bool bpNeuronNet::training(const double inputs[], const double targets[])
+bool BPNeuronNet::Train(const double inputs[], const double targets[])
 {
     const double* prevOutActivations = NULL;
     double* prevOutErrors = NULL;
-    trainUpdate(inputs, targets);
+    TrainUpdate(inputs, targets);
 
     for (int i = mNumHiddenLayers; i >= 0; i--)
     {
-        neuronLayer& curLayer = *mNeuronLayers[i];
+        NeuronLayer& curLayer = *mNeuronLayers[i];
 
         /** get the out activation of prev layer or use inputs data */
 
         if (i > 0)
         {
-            neuronLayer& prev = *mNeuronLayers[(i - 1)];
+            NeuronLayer& prev = *mNeuronLayers[(i - 1)];
             prevOutActivations = prev.mOutActivations;
             prevOutErrors = prev.mOutErrors;
             memset(prevOutErrors, 0, prev.mNumNeurons * sizeof(double));
@@ -351,37 +349,37 @@ bool bpNeuronNet::training(const double inputs[], const double targets[])
             prevOutErrors = NULL;
         }
 
-        trainNeuronLayer(curLayer, prevOutActivations, prevOutErrors);
+        TrainNeuronLayer(curLayer, prevOutActivations, prevOutErrors);
     }
 
     return true;
 }
 
 
-bool bpNeuronNet::training(const int indexArray[], const size_t arraySize, const double targets[])
+bool BPNeuronNet::Train(const int indexArray[], const size_t arraySize, const double targets[])
 {
     const double* prevOutActivations = NULL;
     double* prevOutErrors = NULL;
-    trainUpdate(indexArray, arraySize, targets);
+    TrainUpdate(indexArray, arraySize, targets);
 
     for (int i = mNumHiddenLayers; i >= 0; i--)
     {
-        neuronLayer& curLayer = *mNeuronLayers[i];
+        NeuronLayer& curLayer = *mNeuronLayers[i];
 
         /** get the out activation of prev layer or use inputs data */
 
         if (i > 0)
         {
-            neuronLayer& prev = *mNeuronLayers[(i - 1)];
+            NeuronLayer& prev = *mNeuronLayers[(i - 1)];
             prevOutActivations = prev.mOutActivations;
             prevOutErrors = prev.mOutErrors;
             memset(prevOutErrors, 0, prev.mNumNeurons * sizeof(double));
-            trainNeuronLayer(curLayer, prevOutActivations, prevOutErrors);
+            TrainNeuronLayer(curLayer, prevOutActivations, prevOutErrors);
 
         }
         else
         {
-            trainNeuronLayer(curLayer, indexArray, arraySize);
+            TrainNeuronLayer(curLayer, indexArray, arraySize);
         }        
     }
 

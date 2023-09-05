@@ -30,8 +30,6 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace std;
-
 #define PROGRESS_DISP_CHAR '*'
 /************************************************************************
 * some random number functions.
@@ -91,25 +89,25 @@ inline double RandGauss()
 	}
 }
 
-inline void showSeparatorLine(char seprator, int lineSize)
+inline void ShowSeparatorLine(char seprator, int lineSize)
 {
-	cout << setfill(seprator) << setw(lineSize) << seprator<<endl;
+	std::cout << std::setfill(seprator) << std::setw(lineSize) << seprator<< std::endl;
 }
 
 
-uint64_t timeNowMs();
+uint64_t GetTimeNowMs();
 
 
-class progressDisplay
+class ProgressDisplay
 {
 public:
-	progressDisplay(int maxValue);
-	~progressDisplay();
+	ProgressDisplay(int maxValue);
+	~ProgressDisplay();
 
-	progressDisplay& operator++();
-	progressDisplay& operator++(int);
+	ProgressDisplay& operator++();
+	ProgressDisplay& operator++(int);
 
-	void updateProgress(int progressValue);
+	void UpdateProgress(int progressValue);
 
 private:
 	int mMaxValue;

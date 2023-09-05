@@ -1,4 +1,3 @@
-
 /*
 * MIT License
 *
@@ -28,23 +27,22 @@
 
 /** the type of neuron layer */
 
-struct neuronLayer 
+struct NeuronLayer 
 {
 public:
-	neuronLayer(int numNeurons, int numInputsPerNeuron);
+	NeuronLayer(int numNeurons, int numInputsPerNeuron);
 
-	neuronLayer(neuronLayer& nl);
-	~neuronLayer();
-
-	void reset(void);
+	NeuronLayer(NeuronLayer& nl);
+	~NeuronLayer();
+public:
+	void Reset(void);
 public:
 	int mNumInputsPerNeuron; /** the count of input node per neuron */
 	int mNumNeurons; /** the count of neuron(or node) of current layer */
-
+public:
 	double** mWeights; /** 2D array,row: indicate neuron, column: the weights per neuron */
 	double* mOutActivations; /** the output activation of neuron. 1D array, the index of array indicate neuron */
 	double* mOutErrors; /** the error of output of neuron. 1D array, the index of array indicate neuron */
-
 };
 
 

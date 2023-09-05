@@ -44,29 +44,28 @@
 typedef std::vector<int> InputIndex;
 
 
-void showNumber(unsigned char pic[], int width, int height)
+void ShowNumbersImage(unsigned char pic[], int width, int height)
 {
     int idx = 0;
     for (int i=0; i < height; i++)
     {
         for (int j = 0; j < width; j++ )
         {
-
             if (pic[idx++])
             {
-                cout << "1";
+                std::cout << "1";
             }
             else
             {
-                cout << " ";
+                std::cout << " ";
             }
         }
 
-        cout << endl;
+        std::cout << std::endl;
     }
 }
 
-inline void preProcessInputData(const unsigned char src[], double out[], int size)
+inline void PreprocessInputData(const unsigned char src[], double out[], int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -74,7 +73,7 @@ inline void preProcessInputData(const unsigned char src[], double out[], int siz
     }
 }
 
-inline void preProcessInputDataWithNoise(const unsigned char src[], double out[], int size)
+inline void PreprocessInputDataWithNoise(const unsigned char src[], double out[], int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -82,7 +81,7 @@ inline void preProcessInputDataWithNoise(const unsigned char src[], double out[]
     }
 }
 
-inline void preProcessInputData(const unsigned char src[],int size, InputIndex& indexs)
+inline void PreprocessInputData(const unsigned char src[],int size, InputIndex& indexs)
 {
     for (int i = 0; i < size; i++)
     {
@@ -94,11 +93,11 @@ inline void preProcessInputData(const unsigned char src[],int size, InputIndex& 
 }
 
 
-double trainEpoch(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImages)
+double TrainEpoch(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
-    double net_target[NUM_NET_OUT];
+    double net_target[NUM_NET_OUT]{};
     char* temp = new char[imageSize];
-    progressDisplay progd(numImages);
+    ProgressDisplay progd(numImages);
 
     double* net_train = new double[imageSize];
     for (int i = 0; i < numImages; i++)
@@ -106,16 +105,16 @@ double trainEpoch(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImage
         int label = 0;
         memset(net_target, 0, NUM_NET_OUT * sizeof(double));
 
-        if (src.read(&label, temp))
+        if (src.Read(&label, temp))
         {
             net_target[label] = 1.0;
-            preProcessInputDataWithNoise((unsigned char*)temp, net_train, imageSize);
-            bpnn.training(net_train, net_target);
+            PreprocessInputDataWithNoise((unsigned char*)temp, net_train, imageSize);
+            bpnn.Train(net_train, net_target);
 
         }
         else
         {
-            cout << "read train data failed" << endl;
+            std::cout << "read train data failed" << std::endl;
             break;
         }
         //progd.updateProgress(i);
@@ -123,29 +122,29 @@ double trainEpoch(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImage
         progd++;
     }
 
-    cout << "the error is:" << bpnn.getError() << " after training " << endl;
+    std::cout << "the error is:" << bpnn.GetError() << " after training " << std::endl;
 
     delete []net_train;
     delete []temp;
 
-    return bpnn.getError();
+    return bpnn.GetError();
 }
 
-int testRecognition(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int numImages)
+int TestRecognition(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     int ok_cnt = 0;
     double* net_out = NULL;
     char* temp = new char[imageSize];
-    progressDisplay progd(numImages);
+    ProgressDisplay progd(numImages);
     double* net_test = new double[imageSize];
     for (int i = 0; i < numImages; i++)
     {
         int label = 0;
 
-        if (testData.read(&label, temp))
+        if (testData.Read(&label, temp))
         {			
-            preProcessInputData((unsigned char*)temp, net_test, imageSize);
-            bpnn.process(net_test, &net_out);
+            PreprocessInputData((unsigned char*)temp, net_test, imageSize);
+            bpnn.Process(net_test, &net_out);
 
             int idx = -1;
             double max_value = -99999;
@@ -163,11 +162,11 @@ int testRecognition(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int n
                 ok_cnt++;
             }
 
-            progd.updateProgress(i);
+            progd.UpdateProgress(i);
         }
         else
         {
-            cout << "read test data failed" << endl;
+            std::cout << "read test data failed" << std::endl;
             break;
         }
     }
@@ -181,11 +180,11 @@ int testRecognition(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int n
 }
 
 
-double trainEpoch2(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImages)
+double TrainEpoch2(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
-    double net_target[NUM_NET_OUT];
+    double net_target[NUM_NET_OUT]{};
     char* temp = new char[imageSize];
-    progressDisplay progd(numImages);
+    ProgressDisplay progd(numImages);
 
     InputIndex indexs;
 
@@ -195,17 +194,17 @@ double trainEpoch2(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImag
         memset(net_target, 0, NUM_NET_OUT * sizeof(double));
         indexs.clear();
 
-        if (src.read(&label, temp))
+        if (src.Read(&label, temp))
         {
             net_target[label] = 1.0;
-            preProcessInputData((unsigned char*)temp, imageSize, indexs);
+            PreprocessInputData((unsigned char*)temp, imageSize, indexs);
 
-            bpnn.training(indexs.data(), indexs.size(), net_target);
+            bpnn.Train(indexs.data(), indexs.size(), net_target);
 
         }
         else
         {
-            cout << "read train data failed" << endl;
+            std::cout << "read train data failed" << std::endl;
             break;
         }
         //progd.updateProgress(i);
@@ -213,19 +212,19 @@ double trainEpoch2(dataInput& src, bpNeuronNet& bpnn, int imageSize, int numImag
         progd++;
     }
 
-    cout << "the error is:" << bpnn.getError() << " after training " << endl;
+    std::cout << "the error is:" << bpnn.GetError() << " after training " << std::endl;
 
     delete[]temp;
 
-    return bpnn.getError();
+    return bpnn.GetError();
 }
 
-int testRecognition2(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int numImages)
+int TestRecognition2(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     int ok_cnt = 0;
     double* net_out = NULL;
     char* temp = new char[imageSize];
-    progressDisplay progd(numImages);
+    ProgressDisplay progd(numImages);
     InputIndex indexs;
 
     for (int i = 0; i < numImages; i++)
@@ -233,10 +232,10 @@ int testRecognition2(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int 
         int label = 0;
         indexs.clear();
 
-        if (testData.read(&label, temp))
+        if (testData.Read(&label, temp))
         {
-            preProcessInputData((unsigned char*)temp, imageSize, indexs);
-            bpnn.process(indexs.data(), indexs.size(), &net_out);
+            PreprocessInputData((unsigned char*)temp, imageSize, indexs);
+            bpnn.Process(indexs.data(), indexs.size(), &net_out);
 
             int idx = -1;
             double max_value = -99999;
@@ -254,11 +253,11 @@ int testRecognition2(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int 
                 ok_cnt++;
             }
 
-            progd.updateProgress(i);
+            progd.UpdateProgress(i);
         }
         else
         {
-            cout << "read test data failed" << endl;
+            std::cout << "read test data failed" << std::endl;
             break;
         }
     }
@@ -266,53 +265,38 @@ int testRecognition2(dataInput& testData, bpNeuronNet& bpnn, int imageSize, int 
     delete[]temp;
 
     return ok_cnt;
-
 }
-
-
-
 
 int main(int argc, char* argv[])
 {
-    dataInput src;
-    dataInput testData;
-    bpNeuronNet* bpnn = NULL;
+    DataInput src;
+    DataInput testData;
+    BPNeuronNet* bpnn = nullptr;
     srand((int)time(0));
 
-    if (src.openImageFile(TRAIN_IMAGES_URL) && src.openLabelFile(TRAIN_LABELS_URL))
+    if (src.OpenImageFile(TRAIN_IMAGES_URL) && src.OpenLabelFile(TRAIN_LABELS_URL))
     {
-        int imageSize = src.imageLength();
-        int numImages = src.numImage();
+        int imageSize = src.GetImageLength();
+        int numImages = src.GetImageCount();
         int epochMax = 1;
 
         double expectErr = 0.1;
-#if 0
-        char* temp = new char[imageSize];
-        for (size_t i = 0; i < 5; i++)
-        {
-            if (src.readImage(temp))
-            {
-                showNumber((unsigned char*)temp, src.imageWidth(), src.imageHeight());
-            }
-        }
-#endif
 
-
-        bpnn = new bpNeuronNet(imageSize, NET_LEARNING_RATE);
+        bpnn = new BPNeuronNet(imageSize, NET_LEARNING_RATE);
 
         /** add first hidden layer */
 
-        bpnn->addNeuronLayer(NUM_HIDDEN);
+        bpnn->AddNeuronLayer(NUM_HIDDEN);
         
         /** add output layer */
-        bpnn->addNeuronLayer(NUM_NET_OUT);
+        bpnn->AddNeuronLayer(NUM_NET_OUT);
 
-        cout << "start training ANN..." << endl;
-        uint64_t st = timeNowMs();
+        std::cout << "start training ANN..." << std::endl;
+        uint64_t st = GetTimeNowMs();
 
         for (int i = 0; i < epochMax; i++)
         {
-            double err = trainEpoch(src, *bpnn, imageSize, numImages);
+            double err = TrainEpoch(src, *bpnn, imageSize, numImages);
 
             //if (err <= expectErr)
             {
@@ -320,37 +304,36 @@ int main(int argc, char* argv[])
             //	break;
             }
 
-            src.reset();
+            src.Reset();
         }
 
-        cout << "training ANN success...cast time: " << (timeNowMs() - st) << "(millisecond)" << endl;
+        std::cout << "training ANN success...cast time: " << (GetTimeNowMs() - st) << "(millisecond)" << std::endl;
 
-        showSeparatorLine('=', 80);
-        st = timeNowMs();
+        ShowSeparatorLine('=', 80);
+        st = GetTimeNowMs();
         
-        if (testData.openImageFile(TEST_IMANGES_URL) && testData.openLabelFile(TEST_LABELS_URL))
+        if (testData.OpenImageFile(TEST_IMANGES_URL) 
+            && testData.OpenLabelFile(TEST_LABELS_URL))
         {
-            imageSize = testData.imageLength();
-            numImages = testData.numImage();
+            imageSize = testData.GetImageLength();
+            numImages = testData.GetImageCount();
             
-            cout << "start test ANN with t10k images..." << endl;
+            std::cout << "start test ANN with t10k images..." << std::endl;
 
-            int ok_cnt = testRecognition(testData, *bpnn, imageSize, numImages);
+            int ok_cnt = TestRecognition(testData, *bpnn, imageSize, numImages);
 
-            cout << "digital recognition cast time:"
-                << (timeNowMs() - st) << "(millisecond), " 
-                <<  "ok_cnt: " << ok_cnt << ", total: " << numImages << endl;
+            std::cout << "digital recognition cast time:"
+                << (GetTimeNowMs() - st) << "(millisecond), " 
+                <<  "ok_cnt: " << ok_cnt << ", total: " << numImages << std::endl;
         }
         else
         {
-            cout << "open test image file failed" << endl;
+            std::cout << "open test image file failed" << std::endl;
         }
-
-
     }
     else
     {
-        cout << "open train image file failed" << endl;
+        std::cout << "open train image file failed" << std::endl;
     }
 
     if (bpnn)

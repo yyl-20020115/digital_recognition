@@ -25,8 +25,6 @@
 #include "neuron_utils.h"
 #include "neuron.h"
 
-using namespace std;
-
 /************************************************************************
  * neuron                                                                      
  ************************************************************************/
@@ -36,19 +34,19 @@ using namespace std;
  * neuron layer                                                                      
  ************************************************************************/
 
-neuronLayer::neuronLayer(int numNeurons, int numInputsPerNeuron)
-	:mNumNeurons(numNeurons),
-	mNumInputsPerNeuron(numInputsPerNeuron)
+NeuronLayer::NeuronLayer(int numNeurons, int numInputsPerNeuron)
+	: mNumNeurons(numNeurons)
+	, mNumInputsPerNeuron(numInputsPerNeuron)
 {
 	mWeights = new double*[mNumNeurons];
 	mOutActivations = new double[mNumNeurons];
 	mOutErrors = new double[mNumNeurons];
 
-	reset();
+	Reset();
 }
 
-neuronLayer::neuronLayer(neuronLayer& nl)
-	:neuronLayer(nl.mNumNeurons, nl.mNumInputsPerNeuron)
+NeuronLayer::NeuronLayer(NeuronLayer& nl)
+	: NeuronLayer(nl.mNumNeurons, nl.mNumInputsPerNeuron)
 {
 	int copySize = mNumNeurons * sizeof(double);
 
@@ -61,24 +59,24 @@ neuronLayer::neuronLayer(neuronLayer& nl)
 	}
 }
 
-neuronLayer::~neuronLayer()
+NeuronLayer::~NeuronLayer()
 {
 	/** release weights */
 	for (int i = 0; i < mNumNeurons; i++)
 	{
-		delete []mWeights[i];
+		delete [] mWeights[i];
 	}
 
-	delete []mWeights;
+	delete [] mWeights;
 
 	/** release activations */
-	delete []mOutActivations;
+	delete [] mOutActivations;
 
 	/** release errors */
-	delete []mOutErrors;
+	delete [] mOutErrors;
 }
 
-void neuronLayer::reset()
+void NeuronLayer::Reset()
 {
 	memset(mOutActivations, 0, mNumNeurons * sizeof(double));
 	memset(mOutErrors, 0, mNumNeurons * sizeof(double));
@@ -93,8 +91,8 @@ void neuronLayer::reset()
 		for (int w = 0; w < numWeights; w++)
 		{
 			//set up the weights with an initial random value
-			double temp = RandomClamped();
-			curWeights[w] = temp;
+			double t = RandomClamped();
+			curWeights[w] = t;
 		}
 	}
 }

@@ -27,8 +27,6 @@
 
 #include <fstream>
 
-using namespace std;
-
 #define GRB4(a)  ((unsigned int)((((unsigned char*)(a))[0] << 24) | (((unsigned char*)(a))[1] << 16) |  \
 		        (((unsigned char*)(a))[2] <<  8) | ((unsigned char*)(a))[3]))
 
@@ -36,29 +34,29 @@ using namespace std;
 
 #define DATA_INPUT_LABEL_FLAG 0x00000801
 
-class dataInput
+class DataInput
 {
 public:
-	dataInput();
-	~dataInput();
+	DataInput();
+	~DataInput();
 public:
-	void reset();
-	bool openLabelFile(const char* url);
-	bool openImageFile(const char* url);
+	void Reset();
+	bool OpenLabelFile(const char* url);
+	bool OpenImageFile(const char* url);
 
-	bool readIndex(int* label);
-	bool readImage(char imageBuf[]);
+	bool ReadIndex(int* label);
+	bool ReadImage(char imageBuf[]);
 
-	bool read(int* label, char imageBuf[]);
+	bool Read(int* label, char imageBuf[]);
 
-	inline int numLable() { return mNumLabel; }
-	inline int numImage() { return mNumImage; }
+	inline int GetLabelCount() { return mNumLabel; }
+	inline int GetImageCount() { return mNumImage; }
 
-	inline int labelLength() { return mLabelLen; }
-	inline int imageLength() { return mImageLen; }
+	inline int GetLabelLength() { return mLabelLen; }
+	inline int GetImageLength() { return mImageLen; }
 
-	inline int imageWidth() { return mImageWidth; }
-	inline int imageHeight() { return mImageHeight; }
+	inline int GetImageWidth() { return mImageWidth; }
+	inline int GetImageHeight() { return mImageHeight; }
 private:
 	int mNumLabel;
 	int mNumImage;
@@ -69,8 +67,8 @@ private:
 	int mImageHeight;
 	int mImageStartPos;
 	int mLableStartPos;
-	fstream mLabelFile;
-	fstream mImageFile;
+	std::fstream mLabelFile;
+	std::fstream mImageFile;
 };
 
 #endif // !__DATA_INPUT_H__
