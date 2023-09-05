@@ -38,8 +38,8 @@ DataInput::DataInput()
 	, mImageWidth(0)
 	, labels()
 	, images()
-	, firstLabelIndex()
-	, firstImageIndex()
+	, firstLabelIndex(0)
+	, firstImageIndex(0)
 {
 }
 
@@ -90,6 +90,7 @@ bool DataInput::OpenLabelFile(const char* url)
 						if (mLabelFile.gcount() == mLabelLen) {
 							this->labels.push_back(label);
 						}
+						if (mLabelFile.eof())break;
 					}
 
 					done = true;
@@ -160,6 +161,7 @@ bool DataInput::OpenImageFile(const char* url)
 								if (mImageFile.gcount() == mImageLen) {
 									this->images.push_back(imageData);
 								}
+								if (mImageFile.eof()) break;
 							}
 
 						}

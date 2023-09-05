@@ -327,6 +327,7 @@ bool BPNeuronNet::Train(const double inputs[], const double targets[])
 {
     const double* prevOutActivations = NULL;
     double* prevOutErrors = NULL;
+    //Forward Prop
     TrainUpdate(inputs, targets);
 
     for (int i = mNumHiddenLayers; i >= 0; i--)
@@ -348,7 +349,7 @@ bool BPNeuronNet::Train(const double inputs[], const double targets[])
             prevOutActivations = inputs;
             prevOutErrors = NULL;
         }
-
+        //BackProp
         TrainNeuronLayer(curLayer, prevOutActivations, prevOutErrors);
     }
 
