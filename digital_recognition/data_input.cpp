@@ -36,19 +36,32 @@ DataInput::DataInput()
 	, mLableStartPos(8)
 	, mImageHeight(0)
 	, mImageWidth(0)
+	, labels()
+	, images()
+	, firstLabelIndex()
+	, firstImageIndex()
 {
-	//todo something
 }
 
 DataInput::~DataInput()
 {
-	mLabelFile.close();
-	mImageFile.close();
+	this->labels.clear();
+	for (char* image : this->images) {
+		delete[] image;
+	}
+	this->images.clear();
 }
 
+bool DataInput::OpenFiles(const char* labels, const char* images)
+{
+	return this->OpenLabelFile(labels) && this->OpenImageFile(images);
+}
 
 bool DataInput::OpenLabelFile(const char* url)
 {
+	bool done = false;
+	std::fstream mLabelFile;
+
 	mLabelFile.open(url, std::ios::binary | std::ios::in);
 
 	if (mLabelFile.is_open())
@@ -63,13 +76,23 @@ bool DataInput::OpenLabelFile(const char* url)
 			num = GRB4(buffer);
 			if (DATA_INPUT_LABEL_FLAG == num)
 			{
-				mLabelFile.read(buffer, 4);
+				mLabelFile.read(buffer, sizeof(buffer));
 
-				if (mLabelFile.gcount() == 4)
+				if (mLabelFile.gcount() == sizeof(buffer))
 				{
 					mNumLabel = GRB4(buffer);
 					mLabelLen = 1;
-					return true;
+
+					for (int i = 0; i < mNumLabel; i++) {
+						int label = 0;
+						//read 1s
+						mLabelFile.read((char*)&label, mLabelLen);
+						if (mLabelFile.gcount() == mLabelLen) {
+							this->labels.push_back(label);
+						}
+					}
+
+					done = true;
 				}
 				else
 				{
@@ -81,13 +104,16 @@ bool DataInput::OpenLabelFile(const char* url)
 				std::cout << "this file isn't label file,the flag is:" << num << std::endl;
 			}
 		}
+		mLabelFile.close();
 	}
 
-	return false;
+	return done;
 }
 
 bool DataInput::OpenImageFile(const char* url)
 {
+	bool done = false;
+	std::fstream mImageFile;
 	mImageFile.open(url, std::ios::binary | std::ios::in);
 
 	if (mImageFile.is_open())
@@ -96,40 +122,50 @@ bool DataInput::OpenImageFile(const char* url)
 
 		char buffer[4]{};
 
-		mImageFile.read(buffer, 4);
+		mImageFile.read(buffer, sizeof(buffer));
 
-		if (mImageFile.gcount() == 4)
+		if (mImageFile.gcount() == sizeof(buffer))
 		{
 			int flag = DATA_INPUT_IMAGE_FLAG;
 			num = GRB4(buffer);
 			if (DATA_INPUT_IMAGE_FLAG == num)
 			{
-				mImageFile.read(buffer, 4);
+				mImageFile.read(buffer, sizeof(buffer));
 
-				if (mImageFile.gcount() == 4)
+				if (mImageFile.gcount() == sizeof(buffer))
 				{
 					mNumImage = GRB4(buffer);
 
 					int width = 0;
 					int height = 0;
 
-					mImageFile.read((char*)&width, 4);
+					mImageFile.read((char*)&width, sizeof(width));
 
-					if (mImageFile.gcount() == 4)
+					if (mImageFile.gcount() == sizeof(width))
 					{
 						width = GRB4(&width);
-						mImageFile.read((char*)&height, 4);
+						mImageFile.read((char*)&height,sizeof(height));
 
-						if (mImageFile.gcount() == 4)
+						if (mImageFile.gcount() == sizeof(height))
 						{
 							height = GRB4(&height);
 							mImageWidth = width;
 							mImageHeight = height;
 							mImageLen = width * height;
+
+							for (int i = 0; i < mNumImage; i++) {
+								char* imageData = new char[mImageLen];
+
+								mImageFile.read(imageData, mImageLen);
+								if (mImageFile.gcount() == mImageLen) {
+									this->images.push_back(imageData);
+								}
+							}
+
 						}
 					}
 
-					return true;
+					done = true;
 				}
 				else
 				{
@@ -141,55 +177,38 @@ bool DataInput::OpenImageFile(const char* url)
 				std::cout << "this file isn't image file,the flag is:" << num << std::endl;
 			}
 		}
+		mImageFile.close();
 	}
 
-	return false;
+	return done;
 }
 
 bool DataInput::ReadIndex(int* label)
 {
-	if (mLabelFile.is_open() && !mLabelFile.eof())
-	{
-		mLabelFile.read((char*)label, mLabelLen);
-		return mLabelFile.gcount() == mLabelLen;
+	if (label!=nullptr && this->firstLabelIndex<this->labels.size()) {
+		*label = this->labels[this->firstLabelIndex++];
+		return true;
 	}
-
 	return false;
 }
 
-bool DataInput::ReadImage(char imageBuf[])
+bool DataInput::ReadImage(char* imageData, int imageLen)
 {
-	if (mImageFile.is_open() && !mImageFile.eof())
-	{
-		mImageFile.read(imageBuf, mImageLen);
-
-		return mImageFile.gcount() == mImageLen;
+	imageLen = std::min(imageLen, this->mImageLen);
+	if (imageLen > 0 && this->firstImageIndex<this->images.size()) {
+		memcpy(imageData, this->images[this->firstImageIndex++], imageLen);
+		return true;
 	}
-
 	return false;
 }
 
-bool DataInput::Read(int* label, char imageBuf[])
+bool DataInput::Read(int* label, char* imageData, int imageLen)
 {
-	if (ReadIndex(label))
-	{
-		return ReadImage(imageBuf);
-	}
-
-	return false;
+	return ReadIndex(label) && ReadImage(imageData,imageLen);
 }
 
 void DataInput::Reset()
 {
-	if (mImageFile.is_open())
-	{
-		mImageFile.clear();
-		mImageFile.seekg(mImageStartPos);
-	}
-
-	if (mLabelFile.is_open())
-	{
-		mLabelFile.clear();
-		mLabelFile.seekg(mLableStartPos);
-	}
+	this->firstImageIndex = 0;
+	this->firstLabelIndex = 0;
 }

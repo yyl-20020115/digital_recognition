@@ -26,6 +26,7 @@
 #define __DATA_INPUT_H__
 
 #include <fstream>
+#include <vector>
 
 #define GRB4(a)  ((unsigned int)((((unsigned char*)(a))[0] << 24) | (((unsigned char*)(a))[1] << 16) |  \
 		        (((unsigned char*)(a))[2] <<  8) | ((unsigned char*)(a))[3]))
@@ -34,6 +35,7 @@
 
 #define DATA_INPUT_LABEL_FLAG 0x00000801
 
+
 class DataInput
 {
 public:
@@ -41,13 +43,10 @@ public:
 	~DataInput();
 public:
 	void Reset();
-	bool OpenLabelFile(const char* url);
-	bool OpenImageFile(const char* url);
+	bool OpenFiles(const char* labels, const char* images);
+public:
 
-	bool ReadIndex(int* label);
-	bool ReadImage(char imageBuf[]);
-
-	bool Read(int* label, char imageBuf[]);
+	bool Read(int* label, char* imageData, int imageLen = 28*28);
 
 	inline int GetLabelCount() { return mNumLabel; }
 	inline int GetImageCount() { return mNumImage; }
@@ -57,6 +56,12 @@ public:
 
 	inline int GetImageWidth() { return mImageWidth; }
 	inline int GetImageHeight() { return mImageHeight; }
+protected:
+	bool OpenLabelFile(const char* url);
+	bool OpenImageFile(const char* url);
+	bool ReadIndex(int* label);
+	bool ReadImage(char* imageData, int imageLen);
+
 private:
 	int mNumLabel;
 	int mNumImage;
@@ -67,8 +72,13 @@ private:
 	int mImageHeight;
 	int mImageStartPos;
 	int mLableStartPos;
-	std::fstream mLabelFile;
-	std::fstream mImageFile;
+
+private:
+
+	std::vector<int> labels;
+	std::vector<char*> images;
+	int firstLabelIndex;
+	int firstImageIndex;
 };
 
 #endif // !__DATA_INPUT_H__

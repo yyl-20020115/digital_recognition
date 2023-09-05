@@ -26,7 +26,6 @@
 #include <time.h>
 
 #include "bp_neuron_net.h"
-
 #include "data_input.h"
 #include "neuron_utils.h"
 
@@ -35,11 +34,11 @@
 #define NUM_HIDDEN 200
 #define NET_LEARNING_RATE 0.4
 
-#define TRAIN_IMAGES_URL "../docs/train-images.idx3-ubyte"
-#define TRAIN_LABELS_URL "../docs/train-labels.idx1-ubyte"
+#define TRAIN_LABELS_PATH "../docs/train-labels.idx1-ubyte"
+#define TRAIN_IMAGES_PATH "../docs/train-images.idx3-ubyte"
 
-#define TEST_IMANGES_URL "../docs/t10k-images.idx3-ubyte"
-#define TEST_LABELS_URL  "../docs/t10k-labels.idx1-ubyte"
+#define TEST_LABELS_PATH "../docs/t10k-labels.idx1-ubyte"
+#define TEST_IMAGES_PATH "../docs/t10k-images.idx3-ubyte"
 
 typedef std::vector<int> InputIndex;
 
@@ -96,19 +95,18 @@ inline void PreprocessInputData(const unsigned char src[],int size, InputIndex& 
 double TrainEpoch(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     double net_target[NUM_NET_OUT]{};
-    char* temp = new char[imageSize];
-    ProgressDisplay progd(numImages);
+    char* image_data = new char[imageSize];
+    ProgressDisplay progress(numImages);
 
     double* net_train = new double[imageSize];
     for (int i = 0; i < numImages; i++)
     {
-        int label = 0;
         memset(net_target, 0, NUM_NET_OUT * sizeof(double));
-
-        if (src.Read(&label, temp))
+        int label = 0;
+        if (src.Read(&label, image_data))
         {
             net_target[label] = 1.0;
-            PreprocessInputDataWithNoise((unsigned char*)temp, net_train, imageSize);
+            PreprocessInputDataWithNoise((unsigned char*)image_data, net_train, imageSize);
             bpnn.Train(net_train, net_target);
 
         }
@@ -117,15 +115,14 @@ double TrainEpoch(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImage
             std::cout << "read train data failed" << std::endl;
             break;
         }
-        //progd.updateProgress(i);
-
-        progd++;
+        
+        progress++;
     }
 
     std::cout << "the error is:" << bpnn.GetError() << " after training " << std::endl;
 
-    delete []net_train;
-    delete []temp;
+    delete [] net_train;
+    delete [] image_data;
 
     return bpnn.GetError();
 }
@@ -133,36 +130,37 @@ double TrainEpoch(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImage
 int TestRecognition(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     int ok_cnt = 0;
-    double* net_out = NULL;
-    char* temp = new char[imageSize];
-    ProgressDisplay progd(numImages);
+    double* net_out = nullptr;
+    char* image_data = new char[imageSize];
+    ProgressDisplay progress(numImages);
     double* net_test = new double[imageSize];
     for (int i = 0; i < numImages; i++)
     {
         int label = 0;
 
-        if (testData.Read(&label, temp))
+        if (testData.Read(&label, image_data))
         {			
-            PreprocessInputData((unsigned char*)temp, net_test, imageSize);
+            PreprocessInputData((unsigned char*)image_data, net_test, imageSize);
             bpnn.Process(net_test, &net_out);
-
-            int idx = -1;
-            double max_value = -99999;
+            int found_index = -1;
+            double max_value = -DBL_MAX;
+            //output with max value is the number's index
+            //or the number itself
             for (int i = 0; i < NUM_NET_OUT; i++)
             {
                 if (net_out[i] > max_value)
                 {
                     max_value = net_out[i];
-                    idx = i;
+                    found_index = i;
                 }
             }
 
-            if (idx == label)
+            if (found_index == label)
             {
                 ok_cnt++;
             }
 
-            progd.UpdateProgress(i);
+            progress.UpdateProgress(i);
         }
         else
         {
@@ -172,8 +170,8 @@ int TestRecognition(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int n
     }
 
 
-    delete []net_test;
-    delete []temp;
+    delete [] net_test;
+    delete [] image_data;
 
     return ok_cnt;
 
@@ -183,23 +181,23 @@ int TestRecognition(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int n
 double TrainEpoch2(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     double net_target[NUM_NET_OUT]{};
-    char* temp = new char[imageSize];
-    ProgressDisplay progd(numImages);
+    char* image_data = new char[imageSize];
+    ProgressDisplay progress(numImages);
 
-    InputIndex indexs;
+    InputIndex indices;
 
     for (int i = 0; i < numImages; i++)
     {
         int label = 0;
         memset(net_target, 0, NUM_NET_OUT * sizeof(double));
-        indexs.clear();
+        indices.clear();
 
-        if (src.Read(&label, temp))
+        if (src.Read(&label, image_data))
         {
             net_target[label] = 1.0;
-            PreprocessInputData((unsigned char*)temp, imageSize, indexs);
+            PreprocessInputData((unsigned char*)image_data, imageSize, indices);
 
-            bpnn.Train(indexs.data(), indexs.size(), net_target);
+            bpnn.Train(indices.data(), indices.size(), net_target);
 
         }
         else
@@ -207,14 +205,13 @@ double TrainEpoch2(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImag
             std::cout << "read train data failed" << std::endl;
             break;
         }
-        //progd.updateProgress(i);
 
-        progd++;
+        progress++;
     }
 
     std::cout << "the error is:" << bpnn.GetError() << " after training " << std::endl;
 
-    delete[]temp;
+    delete[]image_data;
 
     return bpnn.GetError();
 }
@@ -222,9 +219,9 @@ double TrainEpoch2(DataInput& src, BPNeuronNet& bpnn, int imageSize, int numImag
 int TestRecognition2(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int numImages)
 {
     int ok_cnt = 0;
-    double* net_out = NULL;
-    char* temp = new char[imageSize];
-    ProgressDisplay progd(numImages);
+    double* net_out = nullptr;
+    char* image_data = new char[imageSize];
+    ProgressDisplay progress(numImages);
     InputIndex indexs;
 
     for (int i = 0; i < numImages; i++)
@@ -232,13 +229,13 @@ int TestRecognition2(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int 
         int label = 0;
         indexs.clear();
 
-        if (testData.Read(&label, temp))
+        if (testData.Read(&label, image_data))
         {
-            PreprocessInputData((unsigned char*)temp, imageSize, indexs);
+            PreprocessInputData((unsigned char*)image_data, imageSize, indexs);
             bpnn.Process(indexs.data(), indexs.size(), &net_out);
 
             int idx = -1;
-            double max_value = -99999;
+            double max_value = -DBL_MAX;
             for (int i = 0; i < NUM_NET_OUT; i++)
             {
                 if (net_out[i] > max_value)
@@ -253,7 +250,7 @@ int TestRecognition2(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int 
                 ok_cnt++;
             }
 
-            progd.UpdateProgress(i);
+            progress.UpdateProgress(i);
         }
         else
         {
@@ -262,49 +259,48 @@ int TestRecognition2(DataInput& testData, BPNeuronNet& bpnn, int imageSize, int 
         }
     }
 
-    delete[]temp;
+    delete[]image_data;
 
     return ok_cnt;
 }
 
 int main(int argc, char* argv[])
 {
-    DataInput src;
+    DataInput trainData;
     DataInput testData;
-    BPNeuronNet* bpnn = nullptr;
     srand((int)time(0));
 
-    if (src.OpenImageFile(TRAIN_IMAGES_URL) && src.OpenLabelFile(TRAIN_LABELS_URL))
+    if (trainData.OpenFiles(TRAIN_LABELS_PATH,TRAIN_IMAGES_PATH))
     {
-        int imageSize = src.GetImageLength();
-        int numImages = src.GetImageCount();
+        int imageSize = trainData.GetImageLength();
+        int numImages = trainData.GetImageCount();
         int epochMax = 1;
 
         double expectErr = 0.1;
 
-        bpnn = new BPNeuronNet(imageSize, NET_LEARNING_RATE);
+        BPNeuronNet network(imageSize, NET_LEARNING_RATE);
 
         /** add first hidden layer */
 
-        bpnn->AddNeuronLayer(NUM_HIDDEN);
+        network.AddNeuronLayer(NUM_HIDDEN);
         
         /** add output layer */
-        bpnn->AddNeuronLayer(NUM_NET_OUT);
+        network.AddNeuronLayer(NUM_NET_OUT);
 
         std::cout << "start training ANN..." << std::endl;
         uint64_t st = GetTimeNowMs();
 
         for (int i = 0; i < epochMax; i++)
         {
-            double err = TrainEpoch(src, *bpnn, imageSize, numImages);
+            double err = TrainEpoch(trainData, network, imageSize, numImages);
 
-            //if (err <= expectErr)
+            if (err <= expectErr)
             {
-            //	cout << "train success,the error is: " << err << endl;
-            //	break;
+            	std::cout << "train success,the error is: " << err <<std::endl;
+            	break;
             }
 
-            src.Reset();
+            trainData.Reset();
         }
 
         std::cout << "training ANN success...cast time: " << (GetTimeNowMs() - st) << "(millisecond)" << std::endl;
@@ -312,15 +308,14 @@ int main(int argc, char* argv[])
         ShowSeparatorLine('=', 80);
         st = GetTimeNowMs();
         
-        if (testData.OpenImageFile(TEST_IMANGES_URL) 
-            && testData.OpenLabelFile(TEST_LABELS_URL))
+        if (testData.OpenFiles(TEST_LABELS_PATH,TEST_IMAGES_PATH))
         {
             imageSize = testData.GetImageLength();
             numImages = testData.GetImageCount();
             
             std::cout << "start test ANN with t10k images..." << std::endl;
 
-            int ok_cnt = TestRecognition(testData, *bpnn, imageSize, numImages);
+            int ok_cnt = TestRecognition(testData, network, imageSize, numImages);
 
             std::cout << "digital recognition cast time:"
                 << (GetTimeNowMs() - st) << "(millisecond), " 
@@ -334,11 +329,6 @@ int main(int argc, char* argv[])
     else
     {
         std::cout << "open train image file failed" << std::endl;
-    }
-
-    if (bpnn)
-    {
-        delete bpnn;
     }
 
     getchar();
